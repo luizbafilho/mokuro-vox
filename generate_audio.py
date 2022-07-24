@@ -4,6 +4,8 @@ import os
 import random
 import string
 from pathlib import Path
+import subprocess
+
 
 
 def get_random_string(length):
@@ -15,17 +17,18 @@ def get_random_string(length):
 
 def generate_audio(text: str, speaker_id: int, out_dir: str) -> str:
     filename = get_random_string(8)
-
-    core.initialize(True, 0)
-    core.voicevox_load_openjtalk_dict("open_jtalk_dic_utf_8-1.11")
-
-    wavefmt = core.voicevox_tts(text, speaker_id)
-
     filepath = f"{os.path.join(out_dir, filename)}.wav"
 
-    with open(filepath, "wb") as f:
-        f.write(wavefmt)
-
-    core.finalize()
+    subprocess.run([
+        'python', '/content/voicevox_core/example/python/run.py',
+        '--root_dir_path', "/content/voicevox_core/release",
+        '--use_gpu',
+        '--speaker_id', speaker_id,
+        '--text', text,
+        '--output_file', filepath
+    ])
+    # subprocess.run([
+    #     'echo', filepath
+    # ])
 
     return filepath

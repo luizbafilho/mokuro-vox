@@ -19,9 +19,6 @@ audioIcons.forEach(audio => {
         body.append(script)
 
 def set_audio_tags(item, soup, filepath):
-    count = 0
-    print(filepath)
-
     audio = soup.new_tag("audio", hidden=True, preload="none")
     audio.append(soup.new_tag("source", src=filepath, type="audio/mpeg"))
 
@@ -30,7 +27,6 @@ def set_audio_tags(item, soup, filepath):
     audio_icon.append(audio)
 
     item.append(audio_icon)
-    count+=1
 
 def update_html(html_file):
     with open(html_file, encoding='utf-8') as f:
@@ -40,16 +36,18 @@ def update_html(html_file):
 
     set_audio_play_script(soup)
 
-    count = 0
     for item in soup.select(".textBox"):
-        if count == 100:
-            break
-
         filepath = generate_audio(item.get_text, 11, audio_dir(html_file))
         set_audio_tags(item, soup, filepath)
 
 
-    with open('mangas/updated.html', 'w') as writer:
+    path = Path(html_file)
+    file_name = os.path.basename(html_file)
+    volume_name = os.path.splitext(file_name)[0]
+
+    updatedFilename = os.path.join(path.parent.absolute(), f"{volume_name}-with-audio.html")
+
+    with open(updatedFilename, 'w') as writer:
         writer.write(soup.prettify())
 
 def audio_dir(html_file):
@@ -66,7 +64,6 @@ def audio_dir(html_file):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--html-file", type=str)
-    parser.add_argument("--audio-dir", type=str)
 
     args = parser.parse_args()
 
