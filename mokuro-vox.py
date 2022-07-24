@@ -37,7 +37,7 @@ def update_html(html_file):
     set_audio_play_script(soup)
 
     for item in soup.select(".textBox"):
-        filepath = generate_audio(item.get_text, 11, audio_dir(html_file))
+        filepath = generate_audio(item.get_text(), 11, audio_dir(html_file))
         set_audio_tags(item, soup, filepath)
 
 
@@ -57,7 +57,7 @@ def audio_dir(html_file):
     volume_name = os.path.splitext(file_name)[0]
 
     audio_volume_dir = os.path.join(path.parent, "audio", volume_name)
-    Path(audio_volume_dir).mkdir( parents=True, exist_ok=True )
+    Path(audio_volume_dir).mkdir(parents=True, exist_ok=True)
 
     return audio_volume_dir
 

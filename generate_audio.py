@@ -23,7 +23,7 @@ def generate_audio(text: str, speaker_id: int, out_dir: str) -> str:
         'python', '/content/voicevox_core/example/python/run.py',
         '--root_dir_path', "/content/voicevox_core/release",
         '--use_gpu',
-        '--speaker_id', speaker_id,
+        '--speaker_id', str(speaker_id),
         '--text', text,
         '--output_file', filepath
     ])
