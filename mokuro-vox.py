@@ -3,6 +3,8 @@ from email.mime import audio
 import os
 from pathlib import Path
 from bs4 import BeautifulSoup
+from tqdm import tqdm
+
 
 from generate_audio import generate_audio
 
@@ -36,7 +38,7 @@ def update_html(html_file):
 
     set_audio_play_script(soup)
 
-    for item in soup.select(".textBox"):
+    for item in tqdm(soup.select(".textBox")):
         filepath = generate_audio(item.get_text(), 11, audio_dir(html_file))
         set_audio_tags(item, soup, filepath)
 
