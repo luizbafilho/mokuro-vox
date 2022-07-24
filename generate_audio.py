@@ -14,10 +14,20 @@ def get_random_string(length):
     result_str = ''.join(random.choice(letters) for i in range(length))
     return result_str
 
+def audio_dir(html_file):
+    path = Path(html_file)
 
-def generate_audio(text: str, speaker_id: int, out_dir: str) -> str:
-    filename = get_random_string(8)
-    filepath = f"{os.path.join(out_dir, filename)}.wav"
+    file_name = os.path.basename(html_file)
+    volume_name = os.path.splitext(file_name)[0]
+
+    audio_volume_dir = os.path.join(path.parent, "audio", volume_name)
+    Path(audio_volume_dir).mkdir(parents=True, exist_ok=True)
+
+    return audio_volume_dir
+
+
+def generate_audio(text: str, speaker_id: int, html_file: str) -> str:
+    filepath = f"{os.path.join(audio_dir(html_file), get_random_string(8))}.wav"
 
     subprocess.run([
         'python', '/content/voicevox_core/example/python/run.py',

@@ -30,6 +30,10 @@ def set_audio_tags(item, soup, filepath):
 
     item.append(audio_icon)
 
+def strip_absolute_path(html_file, audio_path):
+    parent_path = Path(html_file).parent.absolute()
+    return os.path.relpath(audio_path, parent_path)
+
 def update_html(html_file):
     with open(html_file, encoding='utf-8') as f:
         html = f.read()
@@ -39,8 +43,8 @@ def update_html(html_file):
     set_audio_play_script(soup)
 
     for item in tqdm(soup.select(".textBox")):
-        filepath = generate_audio(item.get_text(), 11, audio_dir(html_file))
-        set_audio_tags(item, soup, filepath)
+        audiopath = generate_audio(item.get_text(), 11, html_file)
+        set_audio_tags(item, soup, strip_absolute_path(html_file, audiopath))
 
 
     path = Path(html_file)
@@ -52,16 +56,7 @@ def update_html(html_file):
     with open(updatedFilename, 'w') as writer:
         writer.write(soup.prettify())
 
-def audio_dir(html_file):
-    path = Path(html_file)
 
-    file_name = os.path.basename(html_file)
-    volume_name = os.path.splitext(file_name)[0]
-
-    audio_volume_dir = os.path.join(path.parent, "audio", volume_name)
-    Path(audio_volume_dir).mkdir(parents=True, exist_ok=True)
-
-    return audio_volume_dir
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
