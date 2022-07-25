@@ -43,7 +43,7 @@ def update_html(html_file):
     set_audio_play_script(soup)
 
     for item in tqdm(soup.select(".textBox")):
-        audiopath = generate_audio(item.get_text(), 11, html_file)
+        audiopath = generate_audio(item.get_text(), 13, html_file)
         set_audio_tags(item, soup, strip_absolute_path(html_file, audiopath))
 
 

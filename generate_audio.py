@@ -1,5 +1,8 @@
+from urllib import response
 import core
 import os
+import requests
+
 
 import random
 import string
@@ -29,16 +32,20 @@ def audio_dir(html_file):
 def generate_audio(text: str, speaker_id: int, html_file: str) -> str:
     filepath = f"{os.path.join(audio_dir(html_file), get_random_string(8))}.wav"
 
-    subprocess.run([
-        'python', '/content/voicevox_core/example/python/run.py',
-        '--root_dir_path', "/content/voicevox_core/release",
-        '--use_gpu',
-        '--speaker_id', str(speaker_id),
-        '--text', text,
-        '--output_file', filepath
-    ])
-    # subprocess.run([
-    #     'echo', filepath
-    # ])
+    params = dict(
+        speaker=str(speaker_id),
+        text=text
+    )
+
+    audio_query_resp = requests.post('http://localhost:50021/audio_query', params=params)
+
+    params = dict(
+        speaker=str(speaker_id)
+    )
+
+    audio_resp = requests.post('http://localhost:50021/synthesis', params=params, data=audio_query_resp.content)
+
+    with open(filepath, "wb") as f:
+        f.write(audio_resp.content)
 
     return filepath
