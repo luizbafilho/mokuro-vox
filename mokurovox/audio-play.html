@@ -1,0 +1,9 @@
+
+<script>
+    const audioIcons = document.querySelectorAll('.audio-icon');
+    audioIcons.forEach(audio => {
+        audio.addEventListener('click', function handleClick(event) {
+            event.target.parentNode.querySelector('audio').play();
+        });
+    });
+</script>
