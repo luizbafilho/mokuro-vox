@@ -12,9 +12,11 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
+	"github.com/gammazero/workerpool"
 	"github.com/schollz/progressbar/v3"
 )
 
@@ -46,16 +48,22 @@ func GenerateAudio(htmlPath string, speakerId string) error {
 		return err
 	}
 
+	wp := workerpool.New(runtime.NumCPU())
+
 	textBoxes.Each(func(i int, s *goquery.Selection) {
-		audioPath, err := generateAudio(audioDir, s.Text(), speakerId)
-		if err != nil {
-			fmt.Printf("failed generating audio for text=%s err=%s\n", s.Text(), err)
-		}
+		wp.Submit(func() {
+			audioPath, err := generateAudio(audioDir, s.Text(), speakerId)
+			if err != nil {
+				fmt.Printf("failed generating audio for text=%s err=%s\n", s.Text(), err)
+			}
 
-		setAudioTag(s, relativePath(htmlPath, audioPath))
+			setAudioTag(s, relativePath(htmlPath, audioPath))
 
-		bar.Add(1)
+			bar.Add(1)
+		})
 	})
+
+	wp.StopWait()
 
 	setAudioPlayScript(doc)
 	html, err := doc.Html()
