@@ -6,7 +6,6 @@ package cmd
 
 import (
 	"errors"
-	"net/http"
 
 	"github.com/luizbafilho/mokuro-vox/mokurovox"
 	"github.com/spf13/cobra"
@@ -33,12 +32,6 @@ var generateCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return mokurovox.GenerateAudio(volumeFile, speaker, overrideFile)
 	},
-}
-
-func checkVoicevoxConnection() error {
-	_, err := http.Get("https://localhost/50021/version")
-
-	return err
 }
 
 func init() {

@@ -5,6 +5,7 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"net/http"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -32,6 +33,8 @@ func Execute() {
 	}
 }
 
-func init() {
+func checkVoicevoxConnection() error {
+	_, err := http.Get("http://localhost:50021/version")
 
+	return err
 }
