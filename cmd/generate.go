@@ -20,14 +20,9 @@ var (
 
 // generateCmd represents the generate command
 var generateCmd = &cobra.Command{
-	Use:   "generate",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+	Use:          "generate",
+	Short:        "Generates audio files for Mokuro text boxes.",
+	SilenceUsage: true,
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if err := checkVoicevoxConnection(); err != nil {
 			return errors.New("VoiceVox is not running!")
@@ -49,8 +44,8 @@ func checkVoicevoxConnection() error {
 func init() {
 	rootCmd.AddCommand(generateCmd)
 
-	generateCmd.PersistentFlags().StringVar(&volumeFile, "volume-file", "", "Volume html file")
-	generateCmd.PersistentFlags().StringVar(&speaker, "speaker", "", "Speaker ID")
+	generateCmd.PersistentFlags().StringVar(&volumeFile, "volume-file", "", "Volume html file (Required)")
+	generateCmd.PersistentFlags().StringVar(&speaker, "speaker", "", "Speaker ID (Required)")
 	generateCmd.PersistentFlags().BoolVar(&overrideFile, "override-file", false, "Updates Volume file")
 
 	generateCmd.MarkPersistentFlagRequired("volume-file")
