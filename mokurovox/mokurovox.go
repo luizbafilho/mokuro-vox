@@ -10,13 +10,12 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/exec"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/PuerkitoBio/goquery"
-	"github.com/gammazero/workerpool"
 	"github.com/schollz/progressbar/v3"
 )
 
@@ -27,7 +26,7 @@ var (
 	audioTagHtml string
 )
 
-func GenerateAudio(htmlPath string, speakerId string) error {
+func GenerateAudio(htmlPath string, speakerId string, overrideHtml bool) error {
 	var htmlFile, err = os.OpenFile(htmlPath, os.O_RDWR, 0644)
 	if err != nil {
 		return err
@@ -48,22 +47,16 @@ func GenerateAudio(htmlPath string, speakerId string) error {
 		return err
 	}
 
-	wp := workerpool.New(runtime.NumCPU())
-
 	textBoxes.Each(func(i int, s *goquery.Selection) {
-		wp.Submit(func() {
-			audioPath, err := generateAudio(audioDir, s.Text(), speakerId)
-			if err != nil {
-				fmt.Printf("failed generating audio for text=%s err=%s\n", s.Text(), err)
-			}
+		audioPath, err := generateAudio(audioDir, s.Text(), speakerId)
+		if err != nil {
+			fmt.Printf("failed generating audio for text=%s err=%s\n", s.Text(), err)
+		}
 
-			setAudioTag(s, relativePath(htmlPath, audioPath))
+		setAudioTag(s, relativePath(htmlPath, audioPath))
 
-			bar.Add(1)
-		})
+		bar.Add(1)
 	})
-
-	wp.StopWait()
 
 	setAudioPlayScript(doc)
 	html, err := doc.Html()
@@ -71,7 +64,12 @@ func GenerateAudio(htmlPath string, speakerId string) error {
 		return err
 	}
 
-	err = ioutil.WriteFile("mangas/Volume1-updated.html", []byte(html), 0644)
+	updatedPath := htmlPath
+	if !overrideHtml {
+		updatedPath = filepath.Join(path.Dir(htmlPath), volumeName(htmlPath)+"-with-audio.html")
+	}
+
+	err = ioutil.WriteFile(updatedPath, []byte(html), 0644)
 	if err != nil {
 		return err
 	}
@@ -90,11 +88,16 @@ func relativePath(htmlPath string, audioPath string) string {
 	return path
 }
 
+func volumeName(htmlPath string) string {
+	volumeName := strings.TrimSuffix(htmlPath, filepath.Ext(htmlPath))
+	return strings.TrimPrefix(volumeName, path.Dir(htmlPath))
+
+}
+
 func createAudioDir(htmlPath string) (string, error) {
 	parent := path.Dir(htmlPath)
 
-	volumeName := strings.TrimSuffix(htmlPath, filepath.Ext(htmlPath))
-	volumeName = strings.TrimPrefix(volumeName, parent)
+	volumeName := volumeName(htmlPath)
 
 	path := filepath.Join(parent, "audio", volumeName)
 	err := os.MkdirAll(path, os.ModePerm)
@@ -103,15 +106,14 @@ func createAudioDir(htmlPath string) (string, error) {
 }
 
 func generateAudio(audioDir string, text string, speakerId string) (string, error) {
-	audioPath := filepath.Join(audioDir, randomString(5)+".wav")
-
 	audioQuery, err := getAudioQuery(speakerId, text)
 	if err != nil {
 		return "", fmt.Errorf("failed getting audio_query: %w", err)
 	}
 	defer audioQuery.Close()
 
-	if err := synthesizeAudio(speakerId, audioQuery, audioPath); err != nil {
+	audioPath, err := synthesizeAudio(speakerId, audioQuery, audioDir)
+	if err != nil {
 		return "", err
 	}
 
@@ -150,21 +152,29 @@ func getAudioQuery(speakerId string, text string) (io.ReadCloser, error) {
 	return response.Body, nil
 }
 
-func synthesizeAudio(speakerId string, audioQuery io.ReadCloser, audioPath string) error {
+func synthesizeAudio(speakerId string, audioQuery io.ReadCloser, audioDir string) (string, error) {
 	resp, err := http.Post(fmt.Sprintf("http://localhost:50021/synthesis?speaker=%s", speakerId), "application/json", audioQuery)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 
-	out, err := os.Create(audioPath)
+	tmpAudioPath := filepath.Join(audioDir, randomString(5))
+	out, err := os.Create(tmpAudioPath)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer out.Close()
+
 	if _, err := io.Copy(out, resp.Body); err != nil {
-		return fmt.Errorf("failed copying audio=%s to disk: %w", audioPath, err)
+		return "", fmt.Errorf("failed copying audio=%s to disk: %w", tmpAudioPath, err)
 	}
 
-	return nil
+	audioPath := tmpAudioPath + ".mp3"
+	err = exec.Command("ffmpeg", "-i", tmpAudioPath, audioPath).Run()
+	if err != nil {
+		return "", fmt.Errorf("failed converting wav to mp3: %w", err)
+	}
+
+	return audioPath, os.Remove(tmpAudioPath)
 }

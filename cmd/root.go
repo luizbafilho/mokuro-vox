@@ -13,8 +13,9 @@ import (
 )
 
 var (
-	htmlPath string
-	speaker  string
+	volumeFile   string
+	speaker      string
+	overrideHtml bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -26,7 +27,7 @@ examples and usage of using your application. For example:`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mokurovox.GenerateAudio(htmlPath, speaker)
+		return mokurovox.GenerateAudio(volumeFile, speaker, overrideHtml)
 	},
 }
 
@@ -40,12 +41,10 @@ func Execute() {
 }
 
 func init() {
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
-	rootCmd.PersistentFlags().StringVar(&htmlPath, "html-path", "", "Volume html file")
+	rootCmd.PersistentFlags().StringVar(&volumeFile, "volume-file", "", "Volume html file")
 	rootCmd.PersistentFlags().StringVar(&speaker, "speaker", "", "Speaker ID")
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
+	rootCmd.PersistentFlags().BoolVar(&overrideHtml, "override-html", false, "Updates Volume file")
+
+	rootCmd.MarkPersistentFlagRequired("volume-file")
+	rootCmd.MarkPersistentFlagRequired("speaker")
 }
