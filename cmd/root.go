@@ -7,15 +7,7 @@ package cmd
 import (
 	"os"
 
-	"github.com/luizbafilho/mokuro-vox/mokurovox"
-
 	"github.com/spf13/cobra"
-)
-
-var (
-	volumeFile   string
-	speaker      string
-	overrideHtml bool
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -26,9 +18,9 @@ var rootCmd = &cobra.Command{
 examples and usage of using your application. For example:`,
 	// Uncomment the following line if your bare application
 	// has an action associated with it:
-	RunE: func(cmd *cobra.Command, args []string) error {
-		return mokurovox.GenerateAudio(volumeFile, speaker, overrideHtml)
-	},
+	// RunE: func(cmd *cobra.Command, args []string) error {
+	// 	return mokurovox.GenerateAudio(volumeFile, speaker, overrideHtml)
+	// },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -41,10 +33,5 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVar(&volumeFile, "volume-file", "", "Volume html file")
-	rootCmd.PersistentFlags().StringVar(&speaker, "speaker", "", "Speaker ID")
-	rootCmd.PersistentFlags().BoolVar(&overrideHtml, "override-html", false, "Updates Volume file")
 
-	rootCmd.MarkPersistentFlagRequired("volume-file")
-	rootCmd.MarkPersistentFlagRequired("speaker")
 }
