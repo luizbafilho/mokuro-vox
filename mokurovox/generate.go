@@ -1,7 +1,9 @@
 package mokurovox
 
 import (
+	"bytes"
 	_ "embed"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -26,7 +28,7 @@ var (
 	audioTagHtml string
 )
 
-func GenerateAudio(htmlPath string, speakerId string, overrideHtml bool) error {
+func GenerateAudio(htmlPath string, speakerId string, overrideHtml bool, speed float64) error {
 	var htmlFile, err = os.OpenFile(htmlPath, os.O_RDWR, 0644)
 	if err != nil {
 		return err
@@ -48,7 +50,7 @@ func GenerateAudio(htmlPath string, speakerId string, overrideHtml bool) error {
 	}
 
 	textBoxes.Each(func(i int, s *goquery.Selection) {
-		audioPath, err := generateAudio(audioDir, s.Text(), speakerId)
+		audioPath, err := generateAudio(audioDir, s.Text(), speakerId, speed)
 		if err != nil {
 			fmt.Printf("failed generating audio for text=%s err=%s\n", s.Text(), err)
 		}
@@ -105,12 +107,17 @@ func createAudioDir(htmlPath string) (string, error) {
 	return path, err
 }
 
-func generateAudio(audioDir string, text string, speakerId string) (string, error) {
+func generateAudio(audioDir string, text string, speakerId string, speed float64) (string, error) {
 	audioQuery, err := getAudioQuery(speakerId, text)
 	if err != nil {
 		return "", fmt.Errorf("failed getting audio_query: %w", err)
 	}
 	defer audioQuery.Close()
+
+	audioQuery, err = setSpeed(audioQuery, speed)
+	if err != nil {
+		return "", fmt.Errorf("failed setting speed: %w", err)
+	}
 
 	audioPath, err := synthesizeAudio(speakerId, audioQuery, audioDir)
 	if err != nil {
@@ -118,6 +125,26 @@ func generateAudio(audioDir string, text string, speakerId string) (string, erro
 	}
 
 	return audioPath, nil
+}
+
+func setSpeed(body io.ReadCloser, speed float64) (io.ReadCloser, error) {
+	data, err := ioutil.ReadAll(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed audio query response: %w", err)
+	}
+
+	var result map[string]any
+	if err := json.Unmarshal(data, &result); err != nil { // Parse []byte to go struct pointer
+		return nil, fmt.Errorf("failed audio query JSON: %w", err)
+	}
+
+	result["speedScale"] = speed
+	data, err = json.Marshal(result)
+	if err != nil {
+		return nil, fmt.Errorf("failed marshalling updated audio query: %w", err)
+	}
+
+	return io.NopCloser(bytes.NewReader(data)), nil
 }
 
 func setAudioPlayScript(doc *goquery.Document) {

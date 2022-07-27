@@ -15,6 +15,7 @@ var (
 	volumeFile   string
 	speaker      string
 	overrideFile bool
+	speed        float64
 )
 
 // generateCmd represents the generate command
@@ -30,7 +31,7 @@ var generateCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return mokurovox.GenerateAudio(volumeFile, speaker, overrideFile)
+		return mokurovox.GenerateAudio(volumeFile, speaker, overrideFile, speed)
 	},
 }
 
@@ -39,6 +40,7 @@ func init() {
 
 	generateCmd.PersistentFlags().StringVar(&volumeFile, "volume-file", "", "Volume html file (Required)")
 	generateCmd.PersistentFlags().StringVar(&speaker, "speaker", "", "Speaker ID (Required)")
+	generateCmd.PersistentFlags().Float64Var(&speed, "speed", 1, "Controls the playback speed")
 	generateCmd.PersistentFlags().BoolVar(&overrideFile, "override-file", false, "Updates Volume file")
 
 	generateCmd.MarkPersistentFlagRequired("volume-file")
