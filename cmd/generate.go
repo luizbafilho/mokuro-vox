@@ -5,7 +5,12 @@ Copyright © 2022 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"bufio"
 	"errors"
+	"fmt"
+	"log"
+	"os"
+	"strings"
 
 	"github.com/luizbafilho/mokuro-vox/mokurovox"
 	"github.com/spf13/cobra"
@@ -31,6 +36,12 @@ var generateCmd = &cobra.Command{
 		return nil
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if overrideFile {
+			if ok := askForConfirmation("Are you sure you want to override the volume file?\nThis operation is irreversible."); !ok {
+				return nil
+			}
+		}
+
 		return mokurovox.GenerateAudio(volumeFile, speaker, overrideFile, speed)
 	},
 }
@@ -45,4 +56,25 @@ func init() {
 
 	generateCmd.MarkPersistentFlagRequired("volume-file")
 	generateCmd.MarkPersistentFlagRequired("speaker")
+}
+
+func askForConfirmation(s string) bool {
+	reader := bufio.NewReader(os.Stdin)
+
+	for {
+		fmt.Printf("%s [y/n]: ", s)
+
+		response, err := reader.ReadString('\n')
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		response = strings.ToLower(strings.TrimSpace(response))
+
+		if response == "y" || response == "yes" {
+			return true
+		} else if response == "n" || response == "no" {
+			return false
+		}
+	}
 }
