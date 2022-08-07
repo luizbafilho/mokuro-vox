@@ -110,6 +110,13 @@ func createAudioDir(htmlPath string) (string, error) {
 	volumeName := volumeName(htmlPath)
 
 	path := filepath.Join(parent, "audio", volumeName)
+
+	if err := os.RemoveAll(path); err != nil {
+		if !os.IsNotExist(err) {
+			return "", err
+		}
+	}
+
 	err := os.MkdirAll(path, os.ModePerm)
 
 	return path, err

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/luizbafilho/mokuro-vox/mokurovox"
@@ -31,6 +32,10 @@ var generateCmd = &cobra.Command{
 	PreRunE: func(cmd *cobra.Command, args []string) error {
 		if err := checkVoicevoxConnection(); err != nil {
 			return errors.New("VoiceVox is not running!")
+		}
+
+		if err := exec.Command("ffmpeg", "-version").Run(); err != nil {
+			return errors.New("failed loading ffmpeg, make sure to install it first.")
 		}
 
 		return nil
